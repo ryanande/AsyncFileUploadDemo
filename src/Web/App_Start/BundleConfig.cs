@@ -14,8 +14,10 @@ namespace Web
          
             bundles.Add(new ScriptBundle("~/bundles/site").Include(
                       "~/Scripts/bootstrap.js",
+                      "~/SCripts/bootstrap.file-input.js",
                       "~/Scripts/respond.js",
                       "~/Scripts/knockout-{version}.js",
+                       "~/Scripts/site.js",
                        "~/Scripts/upload.js"));
 
 

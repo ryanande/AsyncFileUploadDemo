@@ -9,6 +9,7 @@ function fileModel(data) {
     this.size = ko.observable(data.size);
     this.type = ko.observable(data.type);
     this.file = ko.observable(data.file);
+
     this.progress = ko.observable(0);
 
     this.error = ko.observable("");
@@ -16,12 +17,11 @@ function fileModel(data) {
         return self.error() != "";
     }, this);
 
-    this.isComplete = ko.computed(function() {
+    this.isComplete = ko.computed(function () {
         return self.progress() == 100;
     });
 
     this.uploadProgress = function (evt) {
-
         if (evt.lengthComputable) {
             self.progress(Math.round(evt.loaded * 100 / evt.total));
         }
@@ -49,19 +49,19 @@ var viewModel = function () {
 
     this.files = ko.observableArray([]);
 
-    this.add = function (elem) {
+    this.addFileItem = function (elem) {
         if (elem.nodeType === 1) {
             $(elem).hide().fadeIn();
         }
     };
 
-    this.remove = function (elem) {
+    this.removeFileItem = function (elem) {
         if (elem.nodeType === 1) {
             $(elem).fadeOut(function () { $(elem).remove(); });
         }
     };
 
-    this.removeFile = function (elem) {
+    this.removeFileClick = function (elem) {
         self.files.remove(elem);
     };
 
@@ -76,12 +76,7 @@ var viewModel = function () {
                 else
                     fileSize = (Math.round(files[i].size * 100 / 1024) / 100).toString() + 'KB';
 
-                self.files.push(new fileModel({
-                    name: files[i].name,
-                    size: fileSize,
-                    type: files[i].type,
-                    file: files[i]
-                }));
+                self.files.push(new fileModel({ name: files[i].name, size: fileSize, type: files[i].type, file: files[i] }));
             }
         }
     };
@@ -95,7 +90,7 @@ var viewModel = function () {
             var file = self.files()[i];
 
             var fd = new FormData();
-            fd.append("id", "123"); 
+            fd.append("id", "123");
             fd.append("fileToUpload", file.file());
 
             /* event listners */

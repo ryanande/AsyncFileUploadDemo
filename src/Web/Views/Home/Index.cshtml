@@ -17,18 +17,17 @@
         <form role="form" action="/api/upload" method="post" enctype="multipart/form-data">
             <div class="row">
                 <div class="form-group">
-                    <label for="exampleInputFile">Select a File to Upload</label>
-                    <input type="file" name="fileToUpload" id="fileToUpload" multiple="multiple" data-bind="event: { change: fileSelected($element.files) }" />
+                    <input type="file" name="fileToUpload" id="fileToUpload" multiple="multiple" title="Select file(s) to upload" class="btn btn-primary" data-bind="event: { change: fileSelected($element.files) }" />
                 </div>
             </div>
             <div class="row">
-                <button type="button" id="uploadBtn" class="btn btn-primary" data-bind="click: upload">Upload</button>
+                <button type="button" id="uploadBtn" class="btn btn-primary" data-bind="click: upload, visible: files().length > 0">Upload</button>
             </div>
         </form>
     </div>
-    <div class="col-md-6" data-bind="foreach: { data: files, beforeRemove: remove, afterAdd: add }">
+    <div class="col-md-6" data-bind="foreach: { data: files, beforeRemove: removeFileItem, afterRemove: uploadCanceled, afterAdd: addFileItem }">
         <div class="alert alert-info">
-            <button type="button" class="close" data-bind="click: $parent.removeFile">&times;</button>
+            <button type="button" class="close" data-bind="click: $parent.removeFileClick">&times;</button>
             <div>
                 <span data-bind="text: name"></span>
                 (<span data-bind="text: size"></span>
