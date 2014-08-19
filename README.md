@@ -1,4 +1,6 @@
 AsyncFileUploadDemo
 ===================
 
-Using XMLHttpRequest 2 object to upload files to a server via Web API and async
+Using XMLHttpRequest2 object along with then FormData object to upload files to a server via Web API asynchronously.
+
+Used KnockoutJs on the UI side. 
