@@ -5,21 +5,36 @@ function fileModel(data) {
 
     var self = this;
 
+    var alertSuccess = "alert alert-success",
+        alertDanger = "alert alert-danger",
+        alertInfo = "alert alert-info";
+
+    this.xhr = {};
+
     this.name = ko.observable(data.name);
     this.size = ko.observable(data.size);
     this.type = ko.observable(data.type);
     this.file = ko.observable(data.file);
+    this.isUploading = ko.observable(false);
 
     this.progress = ko.observable(0);
+
 
     this.error = ko.observable("");
     this.isError = ko.computed(function () {
         return self.error() != "";
     }, this);
 
+
     this.isComplete = ko.computed(function () {
         return self.progress() == 100;
     });
+
+
+    this.alertCss = ko.computed(function() {
+        return self.isComplete() ? alertSuccess : self.isError() ? alertDanger : alertInfo;
+    });
+
 
     this.uploadProgress = function (evt) {
         if (evt.lengthComputable) {
@@ -30,24 +45,57 @@ function fileModel(data) {
         }
     }
 
+
     this.uploadFailed = function (evt) {
         self.error("There was an error attempting to upload the file.");
+        self.done();
     };
 
     this.uploadComplete = function (evt) {
-        //self.error("Upload complete!");
+        self.done();
     };
 
     this.uploadCanceled = function (evt) {
-        self.error("The upload has been canceled by the user or the browser dropped the connection.");
+        self.error("The upload has been canceled by the user or the connection dropped.");
+        self.xhr.abort();
+        self.done();
+    };
+
+    this.startUpload = function() {
+
+        self.isUploading(true);
+        
+        var fd = new FormData();
+        fd.append("id", "123");
+        fd.append("fileToUpload", self.file());
+        
+        var request = new XMLHttpRequest();
+        request.upload.addEventListener("progress", self.uploadProgress, false);
+        request.addEventListener("load", self.uploadComplete, false);
+        request.addEventListener("error", self.uploadFailed, false);
+        request.addEventListener("abort", self.uploadCanceled, false);
+        
+        request.open("POST", "/api/upload");
+        request.send(fd);
+
+        self.xhr = request;
+    };
+
+    this.done = function() {
+        self.isUploading(false);
+        self.xhr = {};
     };
 }
 
 
+
+
 var viewModel = function () {
+
     var self = this;
 
     this.files = ko.observableArray([]);
+
 
     this.addFileItem = function (elem) {
         if (elem.nodeType === 1) {
@@ -55,15 +103,18 @@ var viewModel = function () {
         }
     };
 
-    this.removeFileItem = function (elem) {
+
+    this.fadeOutFileItem = function (elem) {
         if (elem.nodeType === 1) {
             $(elem).fadeOut(function () { $(elem).remove(); });
         }
     };
 
+
     this.removeFileClick = function (elem) {
         self.files.remove(elem);
     };
+
 
     this.fileSelected = function (files) {
 
@@ -82,26 +133,10 @@ var viewModel = function () {
     };
 
     this.upload = function () {
-
         var self = this;
 
         for (var i = 0; i < self.files().length; i++) {
-            var xhr = new XMLHttpRequest();
-            var file = self.files()[i];
-
-            var fd = new FormData();
-            fd.append("id", "123");
-            fd.append("fileToUpload", file.file());
-
-            /* event listners */
-            xhr.upload.addEventListener("progress", file.uploadProgress, false);
-            xhr.addEventListener("load", file.uploadComplete, false);
-            xhr.addEventListener("error", file.uploadFailed, false);
-            xhr.addEventListener("abort", file.uploadCanceled, false);
-
-
-            xhr.open("POST", "/api/upload");
-            xhr.send(fd);
+            self.files()[i].startUpload();
         }
     };
 };
