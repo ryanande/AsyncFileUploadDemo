@@ -31,7 +31,7 @@ function fileModel(data) {
     });
 
 
-    this.alertCss = ko.computed(function() {
+    this.alertCss = ko.computed(function () {
         return self.isComplete() ? alertSuccess : self.isError() ? alertDanger : alertInfo;
     });
 
@@ -55,35 +55,39 @@ function fileModel(data) {
         self.done();
     };
 
-    this.uploadCanceled = function (evt) {
-        self.error("The upload has been canceled by the user or the connection dropped.");
+    this.abort = function () {
         self.xhr.abort();
+    };
+
+    this.uploadCanceled = function (evt) {
+        self.error("The upload has been canceled.");
+        self.progress(0);
         self.done();
     };
 
-    this.startUpload = function() {
+    this.done = function () {
+        self.isUploading(false);
+        self.xhr = {};
+    };
+
+    this.startUpload = function () {
 
         self.isUploading(true);
-        
+
         var fd = new FormData();
         fd.append("id", "123");
         fd.append("fileToUpload", self.file());
-        
+
         var request = new XMLHttpRequest();
         request.upload.addEventListener("progress", self.uploadProgress, false);
         request.addEventListener("load", self.uploadComplete, false);
         request.addEventListener("error", self.uploadFailed, false);
         request.addEventListener("abort", self.uploadCanceled, false);
-        
+
         request.open("POST", "/api/upload");
         request.send(fd);
 
         self.xhr = request;
-    };
-
-    this.done = function() {
-        self.isUploading(false);
-        self.xhr = {};
     };
 }
 
@@ -93,9 +97,7 @@ function fileModel(data) {
 var viewModel = function () {
 
     var self = this;
-
     this.files = ko.observableArray([]);
-
 
     this.addFileItem = function (elem) {
         if (elem.nodeType === 1) {
@@ -103,18 +105,15 @@ var viewModel = function () {
         }
     };
 
-
     this.fadeOutFileItem = function (elem) {
         if (elem.nodeType === 1) {
             $(elem).fadeOut(function () { $(elem).remove(); });
         }
     };
 
-
     this.removeFileClick = function (elem) {
         self.files.remove(elem);
     };
-
 
     this.fileSelected = function (files) {
 
@@ -141,10 +140,5 @@ var viewModel = function () {
     };
 };
 
-
-
 var vm = new viewModel();
 ko.applyBindings(vm);
-
-
-

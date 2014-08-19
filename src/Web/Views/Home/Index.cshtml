@@ -1,18 +1,7 @@
 ﻿@{
     ViewBag.Title = "Home Page";
 }
-
-
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <h1>File Upload Demo</h1>
-            <p>
-                Testing the default behavior of Multi File Async Uploads with HTML and Web API
-            </p>
-        </div>
-    </div>
-</div>
+<h1>File Upload Demo</h1>
 <div class="container">
     <div class="row">
         <div class="col-md-6 col-sm-12 col-xs-12">
@@ -20,34 +9,35 @@
             <form role="form" action="/api/upload" method="post" enctype="multipart/form-data">
                 <div class="row">
                     <div class="form-group">
-                        <input type="file" name="fileToUpload" id="fileToUpload" multiple="multiple" title="Select file(s) to upload" class="btn btn-primary" data-bind="event: { change: fileSelected($element.files) }" />
+                        <p>
+                            Testing the default behavior of Multi File Async Uploads with JavaScript and Web API
+                        </p>
+                        <input type="file" name="fileToUpload" id="fileToUpload" multiple="multiple" title="Browse" class="btn btn-primary btn-sm" data-bind="event: { change: fileSelected($element.files) }" />
                     </div>
                 </div>
                 <div class="row">
-                    <button type="button" id="uploadBtn" class="btn btn-primary" data-bind="click: upload, visible: files().length > 0">Upload</button>
+                    <button type="button" id="uploadBtn" class="btn btn-info btn-lg" data-bind="click: upload, visible: files().length > 0">
+                        <span class="glyphicon glyphicon-cloud-upload"></span>&nbsp;Upload
+                    </button>
                 </div>
             </form>
             <br /><br />
         </div>
         <div class="col-md-6 col-sm-12 col-xs-12" data-bind="foreach: { data: files, beforeRemove: fadeOutFileItem, afterAdd: addFileItem }">
             <div data-bind="css: alertCss">
-                <button type="button" class="close" data-bind="click: $parent.removeFileClick">&times;</button>
+                <button type="button" class="close" data-bind="click: $parent.removeFileClick, visible: !isUploading()">&times;</button>
                 <div>
-                    <span data-bind="text: name"></span>
+                    <strong><span data-bind="text: name"></span></strong>
                     (<span data-bind="text: size"></span>
                     [<span data-bind="text: type"></span>])
                 </div>
-
-
-                <div class="progress">
-                    <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-bind="text: progress() + '%', attr: { 'aria-valuenow': progress() }, style: { width: progress() + '%' }">
-
-                    </div>
+                <div class="progress" data-bind="visible: isUploading">
+                    <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-bind="text: progress() + '%', attr: { 'aria-valuenow': progress() }, style: { width: progress() + '%' }"></div>
                 </div>
 
                 <span class="label label-danger" data-bind="text: error, visible: isError"></span>
                 <span class="label label-success" data-bind="visible: isComplete">Upload complete!</span>
-                <button type="button" class="btn btn-default btn-sm" data-bind="click: uploadCanceled, visible: isUploading">Cancel</button>
+                <button type="button" class="btn btn-default btn-sm" data-bind="click: abort, visible: isUploading">Cancel</button>
             </div>
         </div>
     </div>
