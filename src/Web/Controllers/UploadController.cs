@@ -55,11 +55,18 @@ namespace Web.Controllers
 
     public class MongoDbMultipartFormDataStreamProvider : MultipartFormDataStreamProvider
     {
-        
         private readonly Collection<bool> _isFormData = new Collection<bool>();
+        private readonly MongoDatabase _db;
 
-        public MongoDbMultipartFormDataStreamProvider(string path) : base(path) { }
+        public MongoDbMultipartFormDataStreamProvider(string path) : base(path)
+        {
+            var url = MongoUrl.Create(ConfigurationManager.ConnectionStrings["MongoConnectionString"].ConnectionString);
+            _db = new MongoClient(url)
+                .GetServer()
+                .GetDatabase(url.DatabaseName);
 
+            _db.GridFS.EnsureIndexes();
+        }
 
         public override Stream GetStream(HttpContent parent, HttpContentHeaders headers)
         {
@@ -87,13 +94,8 @@ namespace Web.Controllers
             var fileData = new MultipartFileData(headers, contentDisposition.FileName);
             FileData.Add(fileData); //new Collection<MultipartFileData>();
 
-            var url = MongoUrl.Create(ConfigurationManager.ConnectionStrings["MongoConnectionString"].ConnectionString);
-            var db = new MongoClient(url)
-                .GetServer()
-                .GetDatabase(url.DatabaseName);
 
-            db.GridFS.EnsureIndexes();
-            MongoGridFSStream mongoStream = db.GridFS.Create("", new MongoGridFSCreateOptions
+            MongoGridFSStream mongoStream = _db.GridFS.Create("", new MongoGridFSCreateOptions
             {
                 Id = BsonValue.Create(Guid.NewGuid()),
                 Metadata = new BsonDocument(new Dictionary<string, object>() { { "fileName", contentDisposition.FileName } }),
@@ -104,58 +106,5 @@ namespace Web.Controllers
             return mongoStream;
 
         }
-
-
-        /// <summary>
-        /// Read the non-file contents as form data.
-        /// </summary>
-        /// <returns></returns>
-        public override async Task ExecutePostProcessingAsync()
-        {
-            for (var index = 0; index < Contents.Count; index++)
-            {
-                if (!_isFormData[index])
-                    continue;
-
-                HttpContent formContent = Contents[index];
-                // Extract name from Content-Disposition header. We know from earlier that the header is present.
-                ContentDispositionHeaderValue contentDisposition = formContent.Headers.ContentDisposition;
-                var formFieldName = UnquoteToken(contentDisposition.Name) ?? string.Empty;
-
-                // Read the contents as string data and add to form data
-                string formFieldValue = await formContent.ReadAsStringAsync();
-                FormData.Add(formFieldName, formFieldValue);
-            }
-        }
-
-
-        private static string UnquoteToken(string token)
-        {
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                return token;
-            }
-
-            if (token.StartsWith("\"", StringComparison.Ordinal) && token.EndsWith("\"", StringComparison.Ordinal) && token.Length > 1)
-            {
-                return token.Substring(1, token.Length - 2);
-            }
-
-            return token;
-        }
-    }
-
-
-    public class FileData
-    {
-        public FileData(HttpContentHeaders headers, string awsFileUrl)
-        {
-            Headers = headers;
-            AwsFileUrl = awsFileUrl;
-        }
-
-        public HttpContentHeaders Headers { get; private set; }
-
-        public string AwsFileUrl { get; private set; }
     }
 }
