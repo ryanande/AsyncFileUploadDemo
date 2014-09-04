@@ -75,7 +75,7 @@ function fileModel(data) {
         self.isUploading(true);
 
         var fd = new FormData();
-        fd.append("id", "123");
+        fd.append("FileName", self.Name);
         fd.append("fileToUpload", self.file());
 
         var request = new XMLHttpRequest();
