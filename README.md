@@ -1,15 +1,5 @@
-![cover](http://www.web2carz.com/images/articles/201210/mongo_1350076255_600x275.jpg)
+# Async File Upload Demo #
 
-## Ask Bob... ##
-He'll tell you I can be a little left field sometimes... 
-This is one of those instances! 
-Lucky for me, it didn't originate from me.
-
-So, in a previous post I detailed out a solution for [Async File Uploads with Web API](http://www.flapstack.com/file-uploads-with-web-api-drop-the-3rd-party). I am going to use that post as a jumping point to take things up a notch and get silly with MongoDB.
-
-So here we go, storing files in MongoDb just doesn't seem to make a lot of sense to me, however there are instances where it may make sense and more importantly it can be done!
-
-## Enter Sandman... I mean GridFS ##
 MongoDb has a nice little feature called [GridFS](http://docs.mongodb.org/manual/core/gridfs/). [Mr. K. Scott Allen](https://twitter.com/OdeToCode) outlines things well in a post here wrote [here](http://odetocode.com/blogs/scott/archive/2013/04/16/using-gridfs-in-mongodb-from-c.aspx). What this enables us to do is to store files in a MongoDB with minimal friction! Complimenting that with my earlier post and a simple tweak to the code and we get our wonderful **async** functionality to stream to MongoDB via GridFS instead of a file directory. 
 
 ## "Showz the Codez" ##
