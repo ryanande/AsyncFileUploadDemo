@@ -75,7 +75,7 @@ function fileModel(data) {
         self.isUploading(true);
 
         var fd = new FormData();
-        fd.append("FileName", self.Name);
+        fd.append("FileId", 9); // this is just here to demonstrate that we can submit form input data as well as files.
         fd.append("fileToUpload", self.file());
 
         var request = new XMLHttpRequest();

@@ -14,7 +14,6 @@ using System.Web;
 using System.Web.Http;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Driver.Builders;
 using MongoDB.Driver.GridFS;
 
 namespace Web.Controllers
@@ -45,7 +44,7 @@ namespace Web.Controllers
             var fileInfo = streamProvider.FileData.Select(i =>
             {
                 var info = new FileInfo(i.LocalFileName.Replace("\"", ""));
-                return "File uploaded as " + info.FullName;
+                return "File uploaded as " + info.Name;
             });
             return fileInfo;
         }
@@ -55,10 +54,11 @@ namespace Web.Controllers
 
     public class MongoDbMultipartFormDataStreamProvider : MultipartFormDataStreamProvider
     {
-        private readonly Collection<bool> _isFormData = new Collection<bool>();
+        private readonly List<bool> _isFormData = new List<bool>();
         private readonly MongoDatabase _db;
 
-        public MongoDbMultipartFormDataStreamProvider(string path) : base(path)
+        public MongoDbMultipartFormDataStreamProvider(string path)
+            : base(path)
         {
             var url = MongoUrl.Create(ConfigurationManager.ConnectionStrings["MongoConnectionString"].ConnectionString);
             _db = new MongoClient(url)
@@ -70,10 +70,13 @@ namespace Web.Controllers
 
         public override Stream GetStream(HttpContent parent, HttpContentHeaders headers)
         {
+            if (parent == null)
+                throw new ArgumentNullException("parent");
 
-            // Content-Disposition header is required or form data
-            ContentDispositionHeaderValue contentDisposition = headers.ContentDisposition;
-
+            if (headers == null)
+                throw new ArgumentNullException("headers");
+            
+            var contentDisposition = headers.ContentDisposition;
             if (contentDisposition == null)
             {
                 throw new InvalidOperationException("'Content-Disposition' header field in MIME multipart body part not found.");
@@ -82,29 +85,50 @@ namespace Web.Controllers
 
             if (string.IsNullOrEmpty(contentDisposition.FileName))
             {
-                // We will post process this as form data
                 _isFormData.Add(true);
-                // filename parameter not found in the Content-Disposition header then return a memory stream
                 return new MemoryStream();
             }
 
-            // We won't post process files as form data
             _isFormData.Add(false);
 
             var fileData = new MultipartFileData(headers, contentDisposition.FileName);
-            FileData.Add(fileData); //new Collection<MultipartFileData>();
+            FileData.Add(fileData);
 
 
-            MongoGridFSStream mongoStream = _db.GridFS.Create("", new MongoGridFSCreateOptions
+            return _db.GridFS.Create("", new MongoGridFSCreateOptions
             {
                 Id = BsonValue.Create(Guid.NewGuid()),
-                Metadata = new BsonDocument(new Dictionary<string, object>() { { "fileName", contentDisposition.FileName } }),
+                Metadata = new BsonDocument(new Dictionary<string, object> { { "fileName", contentDisposition.FileName } }),
                 UploadDate = DateTime.UtcNow,
             });
+        }
 
 
-            return mongoStream;
+        public override async Task ExecutePostProcessingAsync()
+        {
+            for (var index = 0; index < Contents.Count; index++)
+            {
+                if (!_isFormData[index])
+                    continue;
 
+                HttpContent formContent = Contents[index];
+                ContentDispositionHeaderValue contentDisposition = formContent.Headers.ContentDisposition;
+                var formFieldName = UnquoteToken(contentDisposition.Name) ?? string.Empty;
+
+                var formFieldValue = await formContent.ReadAsStringAsync();
+                FormData.Add(formFieldName, formFieldValue);
+            }
+        }
+
+        public static string UnquoteToken(string token)
+        {
+            return string.IsNullOrWhiteSpace(token) || 
+                token.Length > 1
+                ? token
+                : (token.StartsWith("\"", StringComparison.Ordinal) &&
+                   token.EndsWith("\"", StringComparison.Ordinal)
+                    ? token.Substring(1, token.Length - 2)
+                    : token);
         }
     }
 }
