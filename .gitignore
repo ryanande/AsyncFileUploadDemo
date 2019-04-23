@@ -475,3 +475,6 @@ healthchecksdb
 # End of https://www.gitignore.io/api/cake,aspnetcore,visualstudio
 build/
 lib
+
+.dotnet/
+src/Web/uploads/
